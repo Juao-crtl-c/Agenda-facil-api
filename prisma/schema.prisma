@@ -1,0 +1,120 @@
+// Schema do Agenda Fácil. Rode `npm run prisma:migrate` depois de configurar
+// DATABASE_URL no .env para aplicar isto na Neon.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  // DATABASE_URL (com -pooler, via PgBouncer) é usada em runtime pelo
+  // Prisma Client; DIRECT_URL (sem -pooler) é usada só pelas migrations —
+  // o pooler roda em modo transação por padrão, o que pode quebrar os
+  // advisory locks que o Prisma Migrate usa. Ambas apontam pro mesmo
+  // banco na Neon, só endpoints diferentes.
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Usuario {
+  id         String    @id @default(uuid())
+  nome       String
+  email      String    @unique
+  senhaHash  String
+  criadoEm   DateTime  @default(now())
+  negocios   Negocio[]
+
+  @@map("usuarios")
+}
+
+model Negocio {
+  id        String   @id @default(uuid())
+  nome      String
+  slug      String   @unique
+  // Fuso IANA (ex: "America/Sao_Paulo") usado para interpretar o horário de
+  // funcionamento e calcular disponibilidade — necessário porque o banco
+  // guarda tudo em UTC, mas "abre às 9h" é um conceito de horário local.
+  timezone  String   @default("America/Sao_Paulo")
+  donoId    String
+  dono      Usuario  @relation(fields: [donoId], references: [id], onDelete: Cascade)
+  criadoEm  DateTime @default(now())
+
+  servicos              Servico[]
+  horariosFuncionamento HorarioFuncionamento[]
+  agendamentos          Agendamento[]
+  bloqueios             Bloqueio[]
+
+  @@index([donoId])
+  @@map("negocios")
+}
+
+// Uma linha por dia da semana em que o negócio atende. Dia sem linha =
+// negócio fechado naquele dia (mais simples de validar que um JSON solto).
+model HorarioFuncionamento {
+  id             String  @id @default(uuid())
+  negocioId      String
+  negocio        Negocio @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  // 0 = domingo ... 6 = sábado
+  diaSemana      Int
+  // Guardados como "HH:mm" (horário local do negócio, não timestamptz —
+  // é um horário de parede recorrente, não um instante específico).
+  horaAbertura   String
+  horaFechamento String
+
+  @@unique([negocioId, diaSemana])
+  @@map("horarios_funcionamento")
+}
+
+model Servico {
+  id              String   @id @default(uuid())
+  negocioId       String
+  negocio         Negocio  @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  nome            String
+  duracaoMinutos  Int
+  preco           Decimal  @db.Decimal(10, 2)
+  criadoEm        DateTime @default(now())
+
+  agendamentos Agendamento[]
+
+  @@index([negocioId])
+  @@map("servicos")
+}
+
+enum StatusAgendamento {
+  CONFIRMADO
+  CANCELADO
+  CONCLUIDO
+}
+
+model Agendamento {
+  id                String            @id @default(uuid())
+  negocioId         String
+  negocio           Negocio           @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  servicoId         String
+  servico           Servico           @relation(fields: [servicoId], references: [id])
+  clienteNome       String
+  clienteTelefone   String
+  clienteEmail      String
+  dataHoraInicio    DateTime          @db.Timestamptz(6)
+  dataHoraFim       DateTime          @db.Timestamptz(6)
+  status            StatusAgendamento @default(CONFIRMADO)
+  tokenCancelamento String            @unique @default(uuid())
+  lembreteEnviado   Boolean           @default(false)
+  criadoEm          DateTime          @default(now())
+
+  @@index([negocioId, dataHoraInicio])
+  @@map("agendamentos")
+}
+
+model Bloqueio {
+  id             String   @id @default(uuid())
+  negocioId      String
+  negocio        Negocio  @relation(fields: [negocioId], references: [id], onDelete: Cascade)
+  dataHoraInicio DateTime @db.Timestamptz(6)
+  dataHoraFim    DateTime @db.Timestamptz(6)
+  motivo         String?
+  criadoEm       DateTime @default(now())
+
+  @@index([negocioId, dataHoraInicio])
+  @@map("bloqueios")
+}
