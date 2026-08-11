@@ -39,7 +39,9 @@ export const agendamentoRepository = {
   buscarPorToken(token: string) {
     return prisma.agendamento.findUnique({
       where: { tokenCancelamento: token },
-      include: { servico: true, negocio: { select: { nome: true, timezone: true } } },
+      // slug é necessário pro frontend montar a URL de
+      // GET /negocios/:slug/disponibilidade na tela de remarcação.
+      include: { servico: true, negocio: { select: { nome: true, slug: true, timezone: true } } },
     });
   },
 

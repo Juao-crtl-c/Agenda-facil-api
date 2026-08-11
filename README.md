@@ -8,8 +8,9 @@ diferente daquele (Next.js full-stack sobre Supabase), este é uma **API REST
 própria**: Node/Express/Postgres com autenticação, persistência e
 documentação construídas do zero, sem depender de um BaaS.
 
-Este repositório é só o backend (`agenda-facil-api`). O frontend
-(`agenda-facil-web`, Next.js consumindo esta API) é um repositório separado.
+Este repositório é só o backend (`agenda-facil-api`). O frontend —
+[`agenda-facil-web`](https://github.com/Juao-crtl-c/agenda-facil-web),
+Next.js consumindo esta API — é um repositório separado.
 
 ## O problema que resolve
 
@@ -144,7 +145,6 @@ criou no `afterAll`; ver nota abaixo).
 
 ## Próximos passos (roadmap)
 
-- [ ] Frontend (`agenda-facil-web`, Next.js) consumindo esta API
 - [ ] Múltiplos profissionais por negócio, cada um com agenda própria
 - [ ] Notificação via WhatsApp (hoje só e-mail)
 - [ ] Página de avaliações/feedback pós-atendimento
