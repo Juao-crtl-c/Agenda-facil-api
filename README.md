@@ -12,6 +12,13 @@ Este repositório é só o backend (`agenda-facil-api`). O frontend —
 [`agenda-facil-web`](https://github.com/Juao-crtl-c/agenda-facil-web),
 Next.js consumindo esta API — é um repositório separado.
 
+## Produção
+
+**https://agenda-facil-api-blbj.onrender.com** (docs em `/docs`) — publicada
+na Render, deploy automático a cada push em `master`. Banco na Neon
+compartilhado com o ambiente de dev por enquanto (ver roadmap: branch
+dedicada é o próximo passo natural).
+
 ## O problema que resolve
 
 Negócio pequeno agenda pelo WhatsApp: esquece de anotar, marca dois clientes
@@ -103,8 +110,8 @@ API. Resumo:
 
 **Interna** — `POST /api/internal/lembretes/processar` (protegida por
 `LEMBRETES_SECRET`, não aparece no Swagger): varre agendamentos confirmados
-pra amanhã sem lembrete enviado e manda e-mail. Chamada 1x/dia por um cron da
-plataforma de deploy (a definir quando este repo for publicado).
+pra amanhã sem lembrete enviado e manda e-mail. Pensada pra ser chamada 1x/dia
+por um cron — ainda não configurado no ambiente de produção.
 
 ## Passo a passo para rodar
 
@@ -150,6 +157,9 @@ criou no `afterAll`; ver nota abaixo).
 - [ ] Página de avaliações/feedback pós-atendimento
 - [ ] Relatório de faturamento por período (possível integração futura com o
       Vianova Gestão Financeira — ideia de ecossistema Vianova Dev)
-- [ ] Branch de banco dedicada a testes na Neon
-- [ ] Deploy (Render/Railway) + cron real chamando
+- [ ] Branch de banco dedicada a testes/produção na Neon (hoje dev e
+      produção compartilham o mesmo banco)
+- [ ] Cron real na Render chamando
       `/api/internal/lembretes/processar` 1x/dia
+- [ ] `RESEND_API_KEY` em produção pra lembretes por e-mail saírem de
+      verdade (hoje só loga)
